@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>英文單字複習器</title>
+  <style>
+    :root {
+      --primary-color: #4a6fa5;
+      --primary-hover: #3b5984;
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --text-muted: #666666;
+      --border-color: #e0e0e0;
+      --correct-color: #4caf50;
+      --wrong-color: #f44336;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      padding: 20px 12px;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .header-subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 16px 0 10px 0;
+    }
+
+    /* 分類頁籤 Tab */
+    .category-tabs {
+      display: flex;
+      background: #eef2f7;
+      border-radius: 10px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .category-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .category-tab.active {
+      background: var(--card-bg);
+      color: var(--primary-color);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 單元網格 */
+    .unit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .btn-option {
+      background: #fff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-color);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-option.selected {
+      background: var(--primary-color);
+      color: #fff;
+      border-color: var(--primary-color);
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .btn-action {
+      width: 100%;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 16px;
+    }
+
+    .btn-action:hover {
+      background: var(--primary-hover);
+    }
+
+    /* 答題畫面 */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .btn-back {
+      background: #f0f2f5;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .question-area {
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .card-display {
+      background: #f9fbfd;
+      border: 2px dashed var(--primary-color);
+      border-radius: 12px;
+      padding: 30px 20px;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--primary-color);
+      cursor: pointer;
+      margin-bottom: 16px;
+      min-height: 130px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sentence-box {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      min-height: 50px;
+    }
+
+    .hint-box {
+      font-size: 13px;
+      color: var(--primary-color);
+      background: #eef4ff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-top: 6px;
+      visibility: hidden; /* 預設隱藏，作答後顯示 */
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .option-card {
+      background: #fff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--primary-color);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-card.correct {
+      border-color: var(--correct-color);
+      background: #e8f5e9;
+      color: var(--correct-color);
+    }
+
+    .option-card.wrong {
+      border-color: var(--wrong-color);
+      background: #ffebee;
+      color: var(--wrong-color);
+    }
+
+    .summary-card {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--wrong-color);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- 設定主畫面 -->
+    <div id="setup-screen">
+      <h1 class="header-title">英文單字複習器</h1>
+      <div class="header-subtitle">雜誌 · 課本 · 單字書 獨立分類</div>
+
+      <div class="section-title">1. 選擇書籍分類</div>
+      <div class="category-tabs">
+        <button class="category-tab active" onclick="switchCategory('magazine')">雜誌</button>
+        <button class="category-tab" onclick="switchCategory('textbook')">課本</button>
+        <button class="category-tab" onclick="switchCategory('vocabulary')">單字書</button>
+      </div>
+
+      <div class="section-title">2. 選擇單元範圍</div>
+      <div id="unit-container" class="unit-grid">
+        <!-- 動態生成單元按鈕 -->
+      </div>
+
+      <div class="section-title">3. 選擇複習模式</div>
+      <div class="mode-grid">
+        <button class="btn-option" onclick="selectMode(this, 'flashcard')">閃卡翻面</button>
+        <button class="btn-option" onclick="selectMode(this, 'eng2chi')">看英選中</button>
+        <button class="btn-option" onclick="selectMode(this, 'chi2eng')">看中選英</button>
+        <button class="btn-option selected" onclick="selectMode(this, 'fill')">📝 句子填空題</button>
+      </div>
+
+      <button class="btn-action" onclick="startQuiz()">開始複習</button>
+    </div>
+
+    <!-- 答題畫面 -->
+    <div id="quiz-screen" class="hidden">
+      <div class="top-bar">
+        <button class="btn-back" onclick="goBack()">← 返回設定</button>
+        <span class="progress-text" id="progress-indicator">1 / 1</span>
+      </div>
+
+      <div class="question-area" id="quiz-content-area">
+        <!-- 動態填入不同模式畫面 -->
+      </div>
+
+      <button class="btn-action hidden" id="next-btn" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <!-- 結算與錯題複習畫面 -->
+    <div id="summary-screen" class="hidden">
+      <h1 class="header-title">複習結算</h1>
+      <div class="header-subtitle" id="score-subtitle">正確率 100%</div>
+
+      <div id="wrong-list-container" style="max-height: 280px; overflow-y: auto; margin: 15px 0;">
+        <!-- 錯題清單 -->
+      </div>
+
+      <button class="btn-action" id="retry-wrong-btn" onclick="retryWrongQuestions()">重新複習錯題</button>
+      <button class="btn-action" style="background:#6c757d; margin-top:8px;" onclick="goBack()">返回主選單</button>
+    </div>
+
+  </div>
+
+  <script>
+    // 完整題庫資料庫（對應筆記本三大分類與單元）
+    const wordData = {
+      magazine: {
+        units: ['U5', 'U7', 'U8', 'U9', 'U10', 'U11', 'U12', 'U13', 'U14'],
+        words: [
+          { word: 'scenic', sentence: 'The view from the top of the mountain is very ______.', choices: ['scenic', 'stall', 'cliff', 'stunning'], answer: 'scenic', unit: 'U5', meaning: '風景優美的' },
+          { word: 'stall', sentence: 'He bought some fresh fruit from the street ______.', choices: ['stall', 'cliff', 'bounce', 'cluster'], answer: 'stall', unit: 'U5', meaning: '攤位' },
+          { word: 'cliff', sentence: 'The car nearly drove off the edge of the ______.', choices: ['cliff', 'stunning', 'compact', 'theme'], answer: 'cliff', unit: 'U5', meaning: '懸崖' },
+          { word: 'accidental', sentence: 'Their meeting was completely ______.', choices: ['accidental', 'subtle', 'profitable', 'boost'], answer: 'accidental', unit: 'U7', meaning: '偶然的' },
+          { word: 'subtle', sentence: 'There is a ______ difference between the two colors.', choices: ['subtle', 'psychology', 'pace', 'cushion'], answer: 'subtle', unit: 'U7', meaning: '細微的' },
+          { word: 'disorder', sentence: 'The room was in complete ______.', choices: ['disorder', 'distinguish', 'collector', 'antique'], answer: 'disorder', unit: 'U8', meaning: '失調；混亂' },
+          { word: 'beverage', sentence: 'Coffee is a popular morning ______.', choices: ['beverage', 'fatigue', 'ingredient', 'inevitable'], answer: 'beverage', unit: 'U9', meaning: '飲料' },
+          { word: 'marathon', sentence: 'She is training hard to run a ______.', choices: ['marathon', 'workout', 'hooked', 'exhausted'], answer: 'marathon', unit: 'U10', meaning: '馬拉松' },
+          { word: 'species', sentence: 'Many endangered ______ need our protection.', choices: ['species', 'incredible', 'estimate', 'invention'], answer: 'species', unit: 'U11', meaning: '物種' },
+          { word: 'application', sentence: 'Please submit your job ______ by Friday.', choices: ['application', 'portfolio', 'admission', 'competitive'], answer: 'application', unit: 'U12', meaning: '申請' },
+          { word: 'evolution', sentence: 'Darwin studied the ______ of species.', choices: ['evolution', 'astonishing', 'remarkble', 'trait'], answer: 'evolution', unit: 'U13', meaning: '演化' },
+          { word: 'preference', sentence: 'Everyone has their own food ______s.', choices: ['preference', 'beloved', 'affordable', 'delightful'], answer: 'preference', unit: 'U14', meaning: '偏好' }
+        ]
+      },
+      textbook: {
+        units: ['L4', 'U5', 'U6', 'R2'],
+        words: [
+          { word: 'joyous', sentence: 'It was a ______ occasion for the whole family.', choices: ['joyous', 'accompany', 'essential', 'concept'], answer: 'joyous', unit: 'L4', meaning: '令人愉快的' },
+          { word: 'accompany', sentence: 'Will you ______ me to the store?', choices: ['accompany', 'mourn', 'sorrow', 'occasion'], answer: 'accompany', unit: 'L4', meaning: '陪伴' },
+          { word: 'blossom', sentence: 'Cherry ______s bloom in spring.', choices: ['blossom', 'rustle', 'landscape', 'splendor'], answer: 'blossom', unit: 'U5', meaning: '花朵；開花' },
+          { word: 'slope', sentence: 'They went skiing down the snowy ______.', choices: ['slope', 'tumble', 'bruised', 'superior'], answer: 'slope', unit: 'U6', meaning: '斜坡' },
+          { word: 'mystery', sentence: 'The disappearance remains an unsolved ______.', choices: ['mystery', 'evidence', 'harsh', 'phenomenon'], answer: 'R2', meaning: '謎團' },
+          { word: 'resource', sentence: 'Water is a precious natural ______.', choices: ['resource', 'shrink', 'factor', 'contribute'], answer: 'R2', meaning: '資源' }
+        ]
+      },
+      vocabulary: {
+        units: ['V17', 'V18'],
+        words: [
+          { word: 'annual', sentence: 'The company holds an ______ dinner every December.', choices: ['annual', 'turn out', 'admire', 'wrap'], answer: 'annual', unit: 'V17', meaning: '一年一度的' },
+          { word: 'explore', sentence: 'We want to ______ the ancient ruins.', choices: ['explore', 'entire', 'beam', 'crisp'], answer: 'explore', unit: 'V17', meaning: '探討；探索' },
+          { word: 'journey', sentence: 'Their ______ across the desert took three weeks.', choices: ['journey', 'wild', 'overseas', 'occur'], answer: 'journey', unit: 'V18', meaning: '旅行' },
+          { word: 'overseas', sentence: 'He decided to study ______ in the UK.', choices: ['overseas', 'painful', 'intensive', 'event'], answer: 'overseas', unit: 'V18', meaning: '在海外' }
+        ]
+      }
+    };
+
+    let currentCategory = 'magazine';
+    let selectedUnit = 'U5';
+    let selectedMode = 'fill';
+    let quizList = [];
+    let currentIndex = 0;
+    let wrongQuestions = [];
+    let isCardFlipped = false;
+    let isAnsweringWrongMode = false;
+
+    // 切換分類
+    function switchCategory(catKey) {
+      currentCategory = catKey;
+      document.querySelectorAll('.category-tab').forEach((tab, index) => {
+        const keys = ['magazine', 'textbook', 'vocabulary'];
+        tab.classList.toggle('active', keys[index] === catKey);
+      });
+      renderUnits();
+    }
+
+    // 渲染單元按鈕
+    function renderUnits() {
+      const container = document.getElementById('unit-container');
+      container.innerHTML = '';
+      const units = wordData[currentCategory].units;
+      selectedUnit = units[0];
+
+      units.forEach(unit => {
+        const btn = document.createElement('button');
+        btn.className = `btn-option ${unit === selectedUnit ? 'selected' : ''}`;
+        btn.innerText = unit;
+        btn.onclick = () => {
+          document.querySelectorAll('#unit-container .btn-option').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedUnit = unit;
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // 選擇模式
+    function selectMode(btn, mode) {
+      document.querySelectorAll('.mode-grid .btn-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedMode = mode;
+    }
+
+    // 開始複習
+    function startQuiz() {
+      isAnsweringWrongMode = false;
+      const allWords = wordData[currentCategory].words;
+      quizList = allWords.filter(w => w.unit === selectedUnit);
+      if (quizList.length === 0) quizList = allWords;
+
+      initQuizSession();
+    }
+
+    // 初始化測驗狀態
+    function initQuizSession() {
+      currentIndex = 0;
+      wrongQuestions = [];
+      document.getElementById('setup-screen').classList.add('hidden');
+      document.getElementById('summary-screen').classList.add('hidden');
+      document.getElementById('quiz-screen').classList.remove('hidden');
+      loadQuestion();
+    }
+
+    // 載入題目
+    function loadQuestion() {
+      const currentQ = quizList[currentIndex];
+      document.getElementById('progress-indicator').innerText = `${currentIndex + 1} / ${quizList.length}`;
+      document.getElementById('next-btn').classList.add('hidden'); // 隱藏下一題按鈕直到作答
+      const area = document.getElementById('quiz-content-area');
+      area.innerHTML = '';
+
+      if (selectedMode === 'flashcard') {
+        isCardFlipped = false;
+        area.innerHTML = `
+          <div class="card-display" id="flashcard" onclick="flipCard()">
+            <div id="card-front" style="font-size:26px;">${currentQ.word}</div>
+          </div>
+          <div style="font-size:13px; color:var(--text-muted); margin-top:8px;">點擊卡片翻面看中文</div>
+        `;
+        document.getElementById('next-btn').classList.remove('hidden'); // 閃卡模式直接可點下一張
+      } else if (selectedMode === 'fill') {
+        area.innerHTML = `
+          <div class="sentence-box">${currentQ.sentence}</div>
+          <div class="hint-box" id="hint-text">${currentQ.unit} | 中文意思：${currentQ.meaning}</div>
+          <div class="options-list" id="options-container"></div>
+        `;
+        const optContainer = document.getElementById('options-container');
+        currentQ.choices.forEach(choice => {
+          const card = document.createElement('div');
+          card.className = 'option-card';
+          card.innerText = choice;
+          card.onclick = () => handleAnswer(card, choice, currentQ.answer, currentQ);
+          optContainer.appendChild(card);
+        });
+      } else if (selectedMode === 'eng2chi' || selectedMode === 'chi2eng') {
+        const isEng = selectedMode === 'eng2chi';
+        area.innerHTML = `
+          <div style="font-size:24px; font-weight:700; margin-bottom:12px;">${isEng ? currentQ.word : currentQ.meaning}</div>
+          <div class="hint-box" id="hint-text">${currentQ.unit} | ${isEng ? currentQ.meaning : currentQ.word}</div>
+          <div class="options-list" id="options-container"></div>
+        `;
+        const optContainer = document.getElementById('options-container');
+        
+        let choices = [isEng ? currentQ.meaning : currentQ.word];
+        while(choices.length < 4) {
+          let randWord = wordData[currentCategory].words[Math.floor(Math.random() * wordData[currentCategory].words.length)];
+          let optVal = isEng ? randWord.meaning : randWord.word;
+          if(!choices.includes(optVal)) choices.push(optVal);
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        choices.forEach(choice => {
+          const card = document.createElement('div');
+          card.className = 'option-card';
+          card.innerText = choice;
+          let correctVal = isEng ? currentQ.meaning : currentQ.word;
+          card.onclick = () => handleAnswer(card, choice, correctVal, currentQ);
+          optContainer.appendChild(card);
+        });
+      }
+    }
+
+    // 閃卡翻面
+    function flipCard() {
+      isCardFlipped = !isCardFlipped;
+      const currentQ = quizList[currentIndex];
+      const card = document.getElementById('flashcard');
+      if (isCardFlipped) {
+        card.style.background = '#eef4ff';
+        card.innerHTML = `<div style="font-size:22px; font-weight:700;">${currentQ.meaning}</div><div style="font-size:13px; color:var(--text-muted); margin-top:6px;">${currentQ.unit} | ${currentQ.word}</div>`;
+      } else {
+        card.style.background = '#f9fbfd';
+        card.innerHTML = `<div style="font-size:26px;">${currentQ.word}</div>`;
+      }
+    }
+
+    // 作答處理（支援填空、看英選中、看中選英）
+    function handleAnswer(selectedCard, chosenOption, correctAnswer, currentQ) {
+      // 顯示隱藏的提示與解析
+      const hint = document.getElementById('hint-text');
+      if (hint) hint.style.visibility = 'visible';
+
+      const options = document.querySelectorAll('.option-card');
+      options.forEach(opt => {
+        opt.style.pointerEvents = 'none'; // 鎖定選項
+        if (opt.innerText === correctAnswer) {
+          opt.classList.add('correct');
+        }
+      });
+
+      if (chosenOption !== correctAnswer) {
+        selectedCard.classList.add('wrong');
+        if (!wrongQuestions.some(q => q.word === currentQ.word)) {
+          wrongQuestions.push(currentQ);
+        }
+      }
+
+      // 顯示「下一題」按鈕，讓使用者手動點擊進入
+      document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    // 點擊「下一題」按鈕
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < quizList.length) {
+        loadQuestion();
+      } else {
+        showSummary();
+      }
+    }
+
+    // 顯示結算與錯題複習畫面
+    function showSummary() {
+      document.getElementById('quiz-screen').classList.add('hidden');
+      document.getElementById('summary-screen').classList.remove('hidden');
+
+      const total = quizList.length;
+      const correctCount = total - wrongQuestions.length;
+      const rate = Math.round((correctCount / total) * 100);
+
+      document.getElementById('score-subtitle').innerText = `本次正確率：${rate}% (${correctCount}/${total})`;
+      
+      const wrongContainer = document.getElementById('wrong-list-container');
+      wrongContainer.innerHTML = '';
+
+      if (wrongQuestions.length === 0) {
+        wrongContainer.innerHTML = `<div style="text-align:center; color:var(--correct-color); font-weight:700; padding:20px;">太棒了！全部答對，沒有錯題！ 🎉</div>`;
+        document.getElementById('retry-wrong-btn').classList.add('hidden');
+      } else {
+        document.getElementById('retry-wrong-btn').classList.remove('hidden');
+        wrongQuestions.forEach(q => {
+          const item = document.createElement('div');
+          item.className = 'summary-card';
+          item.innerHTML = `<strong>${q.word}</strong> (${q.unit})<br><span style="font-size:13px; color:var(--text-muted);">${q.meaning}</span>`;
+          wrongContainer.appendChild(item);
+        });
+      }
+    }
+
+    // 重新複習錯題
+    function retryWrongQuestions() {
+      if (wrongQuestions.length === 0) return;
+      quizList = [...wrongQuestions];
+      isAnsweringWrongMode = true;
+      initQuizSession();
+    }
+
+    // 返回設定主畫面
+    function goBack() {
+      document.getElementById('quiz-screen').classList.add('hidden');
+      document.getElementById('summary-screen').classList.add('hidden');
+      document.getElementById('setup-screen').classList.remove('hidden');
+    }
+
+    // 初始化頁面
+    renderUnits();
+  </script>
+</body>
+</html>
